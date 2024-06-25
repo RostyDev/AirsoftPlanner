@@ -1,3 +1,4 @@
+import 'package:airsoftplanner/screens/inlog_screen.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -12,7 +13,10 @@ class HomeScreen extends StatelessWidget {
       body: Center(
         child: ElevatedButton(
           onPressed: () {
-            // Add navigation logic here
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const InlogScreen()),
+            );
           },
           child: const Text('Continue'),
         ),
