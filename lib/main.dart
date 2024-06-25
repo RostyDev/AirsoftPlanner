@@ -1,5 +1,5 @@
+import 'package:airsoftplanner/screens/inlog_screen.dart';
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 final theme = ThemeData(
@@ -22,7 +22,7 @@ class AirsoftEventPlannerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: theme,
-      home: const HomeScreen(),
+      home: const InlogScreen(),
     );
   }
 }
