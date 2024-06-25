@@ -1,4 +1,5 @@
-import 'package:airsoftplanner/screens/inlog_screen.dart';
+import '../models/user_manager.dart';
+import 'package:airsoftplanner/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -6,6 +7,8 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Map<String, dynamic>? loggedInUser = UserManager.loggedInUser;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Airsoft Event Planner'),
@@ -13,9 +16,9 @@ class HomeScreen extends StatelessWidget {
       body: Center(
         child: ElevatedButton(
           onPressed: () {
-            Navigator.pushReplacement(
+            Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const InlogScreen()),
+              MaterialPageRoute(builder: (context) => ProfileScreen(userId: loggedInUser!['id'])),
             );
           },
           child: const Text('Continue'),

@@ -27,6 +27,19 @@ class DatabaseService {
     await _connection.close();
   }
   
+  Future<Map<String, dynamic>?> getUserProfile(int userId) async {
+    await init();
+    var results = await _connection.query(
+      'SELECT * FROM gebruikers WHERE id = ?',
+      [userId],
+    );
+    await close();
+    if (results.isNotEmpty) {
+      return results.first.fields; 
+    }
+    return null; 
+  }
+
   // Function to check login credentials and return user information if successful
   Future<Map<String, dynamic>?> checkLogin(String username, String password) async {
     await init();
