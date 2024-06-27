@@ -1,4 +1,5 @@
 import 'package:mysql1/mysql1.dart';
+import 'models/user_model.dart';
 
 class DatabaseService {
   // Singleton patroon voor een enkele instantie van de database service
@@ -27,7 +28,7 @@ class DatabaseService {
     await _connection.close();
   }
   
-  Future<Map<String, dynamic>?> getUserProfile(int userId) async {
+  Future<User?> getUserProfile(int userId) async {
     await init();
     var results = await _connection.query(
       'SELECT * FROM gebruikers WHERE id = ?',
@@ -35,13 +36,13 @@ class DatabaseService {
     );
     await close();
     if (results.isNotEmpty) {
-      return results.first.fields; 
+      return User.fromMap(results.first.fields);
     }
     return null; 
   }
 
   // Function to check login credentials and return user information if successful
-  Future<Map<String, dynamic>?> checkLogin(String username, String password) async {
+  Future<User?> checkLogin(String username, String password) async {
     await init();
     var results = await _connection.query(
       'SELECT * FROM gebruikers WHERE gebruikersnaam = ? AND wachtwoord = ?',
@@ -49,7 +50,7 @@ class DatabaseService {
     );
     await close();
     if (results.isNotEmpty) {
-      return results.first.fields; 
+      return User.fromMap(results.first.fields);
     }
     return null; 
   }

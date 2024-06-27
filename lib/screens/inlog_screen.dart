@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../database_service.dart'; 
 import '../models/user_manager.dart'; 
+import '../models/user_model.dart';
 import '../screens/home_screen.dart';
 
 class InlogScreen extends StatefulWidget {
@@ -31,7 +32,7 @@ class _InlogScreenState extends State<InlogScreen> {
     String username = _usernameController.text.trim();
     String password = _passwordController.text.trim();
 
-    Map<String, dynamic>? loggedInUser = await _databaseService.checkLogin(username, password);
+    User? loggedInUser = await _databaseService.checkLogin(username, password);
 
     setState(() {
       _isLoading = false;
