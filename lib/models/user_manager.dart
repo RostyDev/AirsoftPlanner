@@ -1,11 +1,13 @@
+import 'user_model.dart';
+
 class UserManager {
-  static Map<String, dynamic>? _loggedInUser;
+  static User? _loggedInUser;
 
   // Getter to access logged-in user information
-  static Map<String, dynamic>? get loggedInUser => _loggedInUser;
+  static User? get loggedInUser => _loggedInUser;
 
   // Method to set logged-in user information
-  static void setUser(Map<String, dynamic> user) {
+  static void setUser(User user) {
     _loggedInUser = user;
   }
 
