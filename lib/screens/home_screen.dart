@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:airsoftplanner/models/user_manager.dart';
 import 'package:flutter/material.dart';
-import '../models/event_model.dart'; 
-import '../database_service.dart'; 
+import '../models/event_model.dart';
+import '../database_service.dart';
 import 'profile_screen.dart';
 import '../widgets/event_card_widget.dart';
 
@@ -20,17 +20,13 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    fetchUpcomingEvents(); 
+    fetchUpcomingEvents();
   }
 
   Future<void> fetchUpcomingEvents() async {
-    try {
-      setState(() {
-        futureEvents = DatabaseService().getUpcomingEvents();
-      });
-    } catch (e) {
-      print('Error fetching upcoming events: $e');
-    }
+    setState(() {
+      futureEvents = DatabaseService().getUpcomingEvents();
+    });
   }
 
   @override
@@ -45,7 +41,8 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ProfileScreen(userId: UserManager.loggedInUser!.id),
+                  builder: (context) =>
+                      ProfileScreen(userId: UserManager.loggedInUser!.id),
                 ),
               );
             },
@@ -63,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white, 
+                  color: Colors.white,
                 ),
               ),
             ),
