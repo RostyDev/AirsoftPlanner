@@ -1,5 +1,6 @@
 import 'package:mysql1/mysql1.dart';
 import 'models/user_model.dart';
+import 'models/event_model.dart';
 
 class DatabaseService {
   // Singleton patroon voor een enkele instantie van de database service
@@ -51,6 +52,37 @@ class DatabaseService {
     await close();
     if (results.isNotEmpty) {
       return User.fromMap(results.first.fields);
+    }
+    return null; 
+  }
+
+  Future<List<Event>>? getUpcomingEvents() async {
+    await init();
+    final results = await _connection.query(
+      'SELECT * FROM events WHERE enddate > NOW()',
+    );
+
+    await close();
+
+    List<Event> events = [];
+    for (var row in results) {
+      events.add(Event.fromMap(row.fields));
+    }
+
+    return events;
+  }
+
+  Future<Event?> getEventByID(int eventId) async {
+    await init();
+    var results = await _connection.query(
+      'SELECT * FROM events WHERE id = ?',
+      [eventId],
+    );
+
+    await close();
+
+    if (results.isNotEmpty) {
+      return Event.fromMap(results.first.fields);
     }
     return null; 
   }

@@ -1,6 +1,8 @@
 import 'package:airsoftplanner/models/user_model.dart';
 import 'package:flutter/material.dart';
 import '../database_service.dart';
+import '../models/user_manager.dart';
+import 'inlog_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, required this.userId});
@@ -12,6 +14,19 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              UserManager.clearUser();
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const InlogScreen()),
+                 (route) => false,
+              );
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<User?>(
         future: DatabaseService().getUserProfile(userId),
@@ -34,10 +49,10 @@ class ProfileScreen extends StatelessWidget {
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                   const SizedBox(height: 8),
-                  Text('Description: ${userProfile.beschrijving}',
-                  style: Theme.of(context).textTheme.labelLarge,
+                  Text(
+                    'Description: ${userProfile.beschrijving}',
+                    style: Theme.of(context).textTheme.labelLarge,
                   ),
-                  // Add more fields as per your database schema
                 ],
               ),
             );
