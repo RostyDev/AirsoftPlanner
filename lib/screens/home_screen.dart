@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:airsoftplanner/models/user_manager.dart';
+import 'package:airsoftplanner/screens/add_event_screen.dart';
 import 'package:flutter/material.dart';
 import '../models/event_model.dart';
 import '../database_service.dart';
@@ -21,6 +22,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     fetchUpcomingEvents();
+  }
+
+  void _refreshEvents() {
+    setState(() {
+      futureEvents = DatabaseService().getUpcomingEvents();
+    });
   }
 
   Future<void> fetchUpcomingEvents() async {
@@ -89,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       itemCount: snapshot.data!.length,
                       itemBuilder: (context, index) {
                         final event = snapshot.data![index];
-                        return EventCard(event: event);
+                        return EventCard(event: event, onEventDeleted: _refreshEvents,);
                       },
                     );
                   }
@@ -98,6 +105,18 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AddEventScreen(onEventAdded: _refreshEvents), 
+            ),
+          );
+        },
+        backgroundColor: const Color.fromARGB(255, 0, 100, 52), 
+        child: const Icon(Icons.add),
       ),
     );
   }
