@@ -5,6 +5,7 @@ class Event {
   final DateTime enddate;
   final String location;
   final String beschrijving;
+  final int idGebruiker;
 
   Event({
     required this.id,
@@ -13,6 +14,7 @@ class Event {
     required this.enddate,
     required this.location,
     required this.beschrijving,
+    required this.idGebruiker,
   });
 
   // Factory method to create an Event instance from a Map
@@ -24,6 +26,7 @@ class Event {
       enddate: map['enddate'],
       location: map['location'] as String,
       beschrijving: map['beschrijving'] as String,
+      idGebruiker: map['idGebruiker'] as  int,
     );
   }
 
@@ -36,6 +39,7 @@ class Event {
       'enddate': enddate,
       'location': location,
       'beschrijving': beschrijving,
+      'idGebruiker': idGebruiker,
     };
   }
 }

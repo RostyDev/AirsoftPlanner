@@ -5,8 +5,9 @@ import 'package:intl/intl.dart';
 
 class EventCard extends StatelessWidget {
   final Event event;
+  final VoidCallback onEventDeleted;
 
-  const EventCard({required this.event, super.key});
+  const EventCard({required this.onEventDeleted, required this.event, super.key});
 
   String formatDateTime(DateTime dateTime) {
     final DateFormat formatter = DateFormat('dd-MM HH:mm');
@@ -20,7 +21,7 @@ class EventCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => EventDetailScreen(event: event),
+            builder: (context) => EventDetailScreen(event: event, onEventDeleted: onEventDeleted),
           ),
         );
       },
