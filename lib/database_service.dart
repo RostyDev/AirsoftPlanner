@@ -89,13 +89,14 @@ class DatabaseService {
   Future<void> addEvent(Event event) async {
     await init();
     await _connection.query(
-      'INSERT INTO events (title, startdate, enddate, location, beschrijving) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO events (title, startdate, enddate, location, beschrijving, idGebruiker) VALUES (?, ?, ?, ?, ?, ?)',
       [
         event.title,
         event.startdate.toUtc(),
         event.enddate.toUtc(),
         event.location,
-        event.beschrijving
+        event.beschrijving,
+        event.idGebruiker,
       ],
     );
     await close();

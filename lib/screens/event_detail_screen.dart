@@ -57,7 +57,7 @@ class EventDetailScreen extends StatelessWidget {
         color: const Color.fromARGB(255, 48, 48, 48),
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               event.title,
