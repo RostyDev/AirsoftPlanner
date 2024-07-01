@@ -71,6 +71,23 @@ class DatabaseService {
     return events;
   }
 
+  Future<List<Event>>? getUpcomingEventsByUserId(int idGebruiker) async {
+    await init();
+    final results = await _connection.query(
+      'SELECT * FROM events WHERE idGebruiker = ?',
+      [idGebruiker],
+    );
+
+    await close();
+
+    List<Event> events = [];
+    for (var row in results) {
+      events.add(Event.fromMap(row.fields));
+    }
+
+    return events;
+  }
+
   Future<Event?> getEventByID(int eventId) async {
     await init();
     var results = await _connection.query(

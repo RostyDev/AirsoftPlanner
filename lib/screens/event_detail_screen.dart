@@ -4,33 +4,38 @@ import 'package:flutter/material.dart';
 import '../models/event_model.dart';
 import 'package:intl/intl.dart';
 
-class EventDetailScreen extends StatelessWidget {
+class EventDetailScreen extends StatefulWidget {
   final Event event;
   final VoidCallback onEventDeleted;
 
-  const EventDetailScreen({required this.onEventDeleted, required this.event, super.key});
+  const EventDetailScreen({
+    required this.onEventDeleted,
+    required this.event,
+    super.key,
+  });
 
+  @override
+  _EventDetailScreenState createState() => _EventDetailScreenState();
+}
+
+class _EventDetailScreenState extends State<EventDetailScreen> {
   String formatDateTime(DateTime dateTime) {
     final DateFormat formatter = DateFormat('dd-MM-yyyy HH:mm');
     return formatter.format(dateTime);
   }
 
-  Future<void> deleteEvent(BuildContext context) async {
-    // Implement your logic to delete the event
-    // For example:
-    await DatabaseService().deleteEvent(event.id);
-    
-    // Optionally, show a snackbar or navigate back after deletion
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Event deleted'),
-      ),
-    );
+  Future<void> deleteEvent() async {
+    await DatabaseService().deleteEvent(widget.event.id);
 
-    onEventDeleted();
-
-    // Example of navigating back to previous screen after deletion
-    Navigator.pop(context);
+    if (mounted) {
+      widget.onEventDeleted();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Event deleted'),
+        ),
+      );
+      Navigator.pop(context);
+    }
   }
 
   void editEvent(BuildContext context) {
@@ -39,18 +44,18 @@ class EventDetailScreen extends StatelessWidget {
     // Navigator.push(
     //   context,
     //   MaterialPageRoute(
-    //     builder: (context) => EditEventScreen(event: event),
+    //     builder: (context) => EditEventScreen(event: widget.event),
     //   ),
     // );
   }
 
   @override
   Widget build(BuildContext context) {
-    bool canModify = UserManager.loggedInUser!.id == event.idGebruiker;
+    bool canModify = UserManager.loggedInUser!.id == widget.event.idGebruiker;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(event.title),
+        title: Text(widget.event.title),
         backgroundColor: const Color.fromARGB(255, 116, 116, 116),
       ),
       body: Container(
@@ -60,7 +65,7 @@ class EventDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              event.title,
+              widget.event.title,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -69,7 +74,7 @@ class EventDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              event.beschrijving,
+              widget.event.beschrijving,
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.white70,
@@ -77,7 +82,7 @@ class EventDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              'Start Date: ${formatDateTime(event.startdate)}',
+              'Start Date: ${formatDateTime(widget.event.startdate)}',
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.white,
@@ -85,7 +90,7 @@ class EventDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              'End Date: ${formatDateTime(event.enddate)}',
+              'End Date: ${formatDateTime(widget.event.enddate)}',
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.white,
@@ -93,7 +98,7 @@ class EventDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              'Location: ${event.location}',
+              'Location: ${widget.event.location}',
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.white,
@@ -117,7 +122,8 @@ class EventDetailScreen extends StatelessWidget {
                     builder: (BuildContext context) {
                       return AlertDialog(
                         title: const Text('Delete Event'),
-                        content: const Text('Are you sure you want to delete this event?'),
+                        content: const Text(
+                            'Are you sure you want to delete this event?'),
                         actions: <Widget>[
                           TextButton(
                             child: const Text('Cancel'),
@@ -127,8 +133,9 @@ class EventDetailScreen extends StatelessWidget {
                           ),
                           TextButton(
                             child: const Text('Delete'),
-                            onPressed: () {
-                              deleteEvent(context);
+                            onPressed: () async {
+                              await deleteEvent();
+                              Navigator.pop(context);
                             },
                           ),
                         ],
