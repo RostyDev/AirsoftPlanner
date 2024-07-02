@@ -20,6 +20,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
   final _descriptionController = TextEditingController();
   DateTime? _startDate;
   DateTime? _endDate;
+  TimeOfDay? _startTime;
+  TimeOfDay? _endTime;
 
   String formatDateTime(DateTime dateTime) {
     final DateFormat formatter = DateFormat('dd-MM-yyyy HH:mm');
@@ -50,6 +52,30 @@ class _AddEventScreenState extends State<AddEventScreen> {
     if (picked != null && picked != _endDate) {
       setState(() {
         _endDate = picked;
+      });
+    }
+  }
+
+  Future<void> _selectStartTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null && picked != _startTime) {
+      setState(() {
+        _startTime = picked;
+      });
+    }
+  }
+
+  Future<void> _selectEndTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null && picked != _endTime) {
+      setState(() {
+        _endTime = picked;
       });
     }
   }
@@ -115,6 +141,13 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 trailing: const Icon(Icons.calendar_today),
                 onTap: () => _selectStartDate(context),
               ),
+              ListTile(
+                title: Text(_startTime == null
+                    ? 'Select Start Time'
+                    : 'Start Time: ${_startTime!.format(context)}'),
+                trailing: const Icon(Icons.access_time),
+                onTap: () => _selectStartTime(context),
+              ),
               const SizedBox(height: 10),
               ListTile(
                 title: Text(_endDate == null
@@ -123,25 +156,48 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 trailing: const Icon(Icons.calendar_today),
                 onTap: () => _selectEndDate(context),
               ),
+              ListTile(
+                title: Text(_endTime == null
+                    ? 'Select End Time'
+                    : 'End Time: ${_endTime!.format(context)}'),
+                trailing: const Icon(Icons.access_time),
+                onTap: () => _selectEndTime(context),
+              ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    if (_startDate == null || _endDate == null) {
+                    if (_startDate == null || _endDate == null || _startTime == null || _endTime == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please select dates')),
+                        const SnackBar(content: Text('Please select dates and times')),
                       );
                       return;
                     }
 
+                    // Combine date and time for start and end
+                    DateTime startDateTime = DateTime(
+                      _startDate!.year,
+                      _startDate!.month,
+                      _startDate!.day,
+                      _startTime!.hour,
+                      _startTime!.minute,
+                    );
+                    DateTime endDateTime = DateTime(
+                      _endDate!.year,
+                      _endDate!.month,
+                      _endDate!.day,
+                      _endTime!.hour,
+                      _endTime!.minute,
+                    );
+
                     Event newEvent = Event(
-                      id: 0, 
+                      id: 0,
                       title: _titleController.text,
-                      startdate: _startDate!,
-                      enddate: _endDate!,
+                      startdate: startDateTime,
+                      enddate: endDateTime,
                       location: _locationController.text,
                       beschrijving: _descriptionController.text,
-                      idGebruiker: UserManager.loggedInUser!.id
+                      idGebruiker: UserManager.loggedInUser!.id,
                     );
 
                     await DatabaseService().addEvent(newEvent);

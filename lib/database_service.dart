@@ -1,15 +1,17 @@
+import 'package:airsoftplanner/models/inschrijving_DTO.dart';
+import 'package:airsoftplanner/models/inschrijving_model.dart';
 import 'package:mysql1/mysql1.dart';
 import 'models/user_model.dart';
 import 'models/event_model.dart';
 
 class DatabaseService {
-  // Singleton patroon voor een enkele instantie van de database service
+  // Singleton pattern for a single instance of the database service
   static final DatabaseService _instance = DatabaseService._internal();
   factory DatabaseService() => _instance;
 
   DatabaseService._internal();
 
-  // Connection instellingen
+  // Connection settings
   final ConnectionSettings _settings = ConnectionSettings(
     host: '10.0.2.2',
     port: 3306,
@@ -17,25 +19,33 @@ class DatabaseService {
     db: 'airsoft_planner',
   );
 
-  late MySqlConnection _connection;
+  MySqlConnection? _connection;
 
-  // Methode om de verbinding te initialiseren
+  // Method to initialize the connection
   Future<void> init() async {
-    _connection = await MySqlConnection.connect(_settings);
+    if (_connection == null) {
+      _connection = await MySqlConnection.connect(_settings);
+    }
   }
 
-  // Methode om de verbinding te sluiten
+  // Method to close the connection
   Future<void> close() async {
-    await _connection.close();
+    await _connection?.close();
+    _connection = null;
+  }
+
+  // Ensure connection is open before executing a query
+  Future<MySqlConnection> _ensureConnection() async {
+    await init();
+    return _connection!;
   }
 
   Future<User?> getUserProfile(int userId) async {
-    await init();
-    var results = await _connection.query(
+    var conn = await _ensureConnection();
+    var results = await conn.query(
       'SELECT * FROM gebruikers WHERE id = ?',
       [userId],
     );
-    await close();
     if (results.isNotEmpty) {
       return User.fromMap(results.first.fields);
     }
@@ -44,24 +54,21 @@ class DatabaseService {
 
   // Function to check login credentials and return user information if successful
   Future<User?> checkLogin(String username, String password) async {
-    await init();
-    var results = await _connection.query(
+    var conn = await _ensureConnection();
+    var results = await conn.query(
         'SELECT * FROM gebruikers WHERE gebruikersnaam = ? AND wachtwoord = ?',
         [username, password]);
-    await close();
     if (results.isNotEmpty) {
       return User.fromMap(results.first.fields);
     }
     return null;
   }
 
-  Future<List<Event>>? getUpcomingEvents() async {
-    await init();
-    final results = await _connection.query(
+  Future<List<Event>> getUpcomingEvents() async {
+    var conn = await _ensureConnection();
+    final results = await conn.query(
       'SELECT * FROM events WHERE enddate > NOW()',
     );
-
-    await close();
 
     List<Event> events = [];
     for (var row in results) {
@@ -71,14 +78,12 @@ class DatabaseService {
     return events;
   }
 
-  Future<List<Event>>? getUpcomingEventsByUserId(int idGebruiker) async {
-    await init();
-    final results = await _connection.query(
+  Future<List<Event>> getUpcomingEventsByUserId(int idGebruiker) async {
+    var conn = await _ensureConnection();
+    final results = await conn.query(
       'SELECT * FROM events WHERE idGebruiker = ?',
       [idGebruiker],
     );
-
-    await close();
 
     List<Event> events = [];
     for (var row in results) {
@@ -89,13 +94,11 @@ class DatabaseService {
   }
 
   Future<Event?> getEventByID(int eventId) async {
-    await init();
-    var results = await _connection.query(
+    var conn = await _ensureConnection();
+    var results = await conn.query(
       'SELECT * FROM events WHERE id = ?',
       [eventId],
     );
-
-    await close();
 
     if (results.isNotEmpty) {
       return Event.fromMap(results.first.fields);
@@ -104,8 +107,8 @@ class DatabaseService {
   }
 
   Future<void> addEvent(Event event) async {
-    await init();
-    await _connection.query(
+    var conn = await _ensureConnection();
+    await conn.query(
       'INSERT INTO events (title, startdate, enddate, location, beschrijving, idGebruiker) VALUES (?, ?, ?, ?, ?, ?)',
       [
         event.title,
@@ -116,21 +119,76 @@ class DatabaseService {
         event.idGebruiker,
       ],
     );
-    await close();
+  }
+
+  Future<void> addInschrijving(Inschrijving inschrijving) async {
+    var conn = await _ensureConnection();
+    await conn.query(
+      'INSERT INTO inschrijvingen (event_id, gebruiker_id, status) VALUES (?, ?, ?)',
+      [
+        inschrijving.event_id,
+        inschrijving.gebruiker_id,
+        inschrijving.status,
+      ],
+    );
+  }
+
+  Future<InschrijvingDTO?> getInschrijving(int eventId, int idGebruiker) async {
+    var conn = await _ensureConnection();
+    var results = await conn.query(
+      'SELECT * FROM inschrijvingen WHERE event_id = ? AND gebruiker_id = ?',
+      [
+        eventId,
+        idGebruiker,
+      ],
+    );
+
+    if (results.isNotEmpty) {
+      Event? event = await getEventByID(results.first.fields['event_id']);
+      User? user = await getUserProfile(results.first.fields['gebruiker_id']);
+
+      InschrijvingDTO tijdelijkInschrijving = InschrijvingDTO(
+        event: event,
+        gebruiker: user,
+        status: results.first.fields['status'],
+      );
+
+      return tijdelijkInschrijving;
+    }
+    return null;
+  }
+
+  Future<void> deleteInschrijving(InschrijvingDTO inschrijving) async {
+    var conn = await _ensureConnection();
+    await conn.query(
+      'DELETE FROM `inschrijvingen` WHERE event_id = ? AND gebruiker_id = ?',
+      [inschrijving.event!.id, inschrijving.gebruiker!.id],
+    );
   }
 
   Future<void> deleteEvent(int eventId) async {
-    await init();
-    await _connection.query(
+    var conn = await _ensureConnection();
+    await conn.query(
       'DELETE FROM events WHERE id = ?',
       [eventId],
     );
-    await close();
+  }
+
+  Future<void> updateInschrijvingStatus(Inschrijving inschrijving) async {
+    var conn = await _ensureConnection();
+    await conn.query(
+      'UPDATE `inschrijvingen` SET `status`= ? WHERE `event_id` = ? AND `gebruiker_id` = ?',
+      [
+        inschrijving.status,
+        inschrijving.event_id,
+        inschrijving.gebruiker_id,
+      ],
+    );
   }
 
   Future<void> editEvent(Event event) async {
-    await init();
-    await _connection.query(
+    var conn = await _ensureConnection();
+    await conn.query(
       'UPDATE events SET title = ?, startdate = ?, enddate = ?, location = ?, beschrijving = ? WHERE id = ?',
       [
         event.title,
@@ -141,6 +199,30 @@ class DatabaseService {
         event.id,
       ],
     );
-    await close();
+  }
+
+  Future<List<InschrijvingDTO>> getInschrijvingenByUserId(int userId) async {
+    var conn = await _ensureConnection();
+    final results = await conn.query(
+      'SELECT * FROM inschrijvingen WHERE gebruiker_id = ?',
+      [userId],
+    );
+
+    List<InschrijvingDTO> inschrijvingen = [];
+    for (var row in results) {
+      Event? event = await getEventByID(row.fields['event_id']);
+      User? user = await getUserProfile(row.fields['gebruiker_id']);
+      if (event != null && user != null) {
+        inschrijvingen.add(
+          InschrijvingDTO(
+            event: event,
+            gebruiker: user,
+            status: row.fields['status'],
+          ),
+        );
+      }
+    }
+
+    return inschrijvingen;
   }
 }

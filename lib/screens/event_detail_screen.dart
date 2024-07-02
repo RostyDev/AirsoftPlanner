@@ -1,5 +1,8 @@
 import 'package:airsoftplanner/database_service.dart';
+import 'package:airsoftplanner/models/inschrijving_DTO.dart';
+import 'package:airsoftplanner/models/inschrijving_model.dart';
 import 'package:airsoftplanner/models/user_manager.dart';
+import 'package:airsoftplanner/models/user_model.dart';
 import 'package:flutter/material.dart';
 import '../models/event_model.dart';
 import 'package:intl/intl.dart';
@@ -19,6 +22,26 @@ class EventDetailScreen extends StatefulWidget {
 }
 
 class _EventDetailScreenState extends State<EventDetailScreen> {
+  InschrijvingDTO? userInschrijving;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserInschrijving();
+  }
+
+  Future<void> fetchUserInschrijving() async {
+    if (UserManager.loggedInUser != null) {
+      final inscription = await DatabaseService().getInschrijving(
+        widget.event.id,
+        UserManager.loggedInUser!.id,
+      );
+      setState(() {
+        userInschrijving = inscription;
+      });
+    }
+  }
+
   String formatDateTime(DateTime dateTime) {
     final DateFormat formatter = DateFormat('dd-MM-yyyy HH:mm');
     return formatter.format(dateTime);
@@ -38,20 +61,59 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     }
   }
 
+  Future<void> deleteInschrijving() async {
+    if (userInschrijving != null) {
+      await DatabaseService().deleteInschrijving(userInschrijving!);
+      setState(() {
+        userInschrijving = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Inschrijving verwijderd'),
+        ),
+      );
+    }
+  }
+
+  Future<void> updateInschrijvingStatus(int newStatus) async {
+    if (userInschrijving != null) {
+      userInschrijving!.status = newStatus;
+
+      Inschrijving tijdelijk = Inschrijving(
+        event_id: userInschrijving!.event!.id,
+        gebruiker_id: userInschrijving!.gebruiker!.id,
+        status: userInschrijving!.status,
+      );
+
+      await DatabaseService().updateInschrijvingStatus(tijdelijk);
+
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Status bijgewerkt'),
+        ),
+      );
+    }
+  }
+
   void editEvent(BuildContext context) {
-    // Navigate to EditEventScreen or implement edit logic here
-    // For example:
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (context) => EditEventScreen(event: widget.event),
-    //   ),
-    // );
+    //todo
+  }
+
+  Future<void> inschrijvenEvent(Event event, User user, int status) async {
+    await DatabaseService().addInschrijving(Inschrijving(
+      id: 0,
+      event_id: event.id,
+      gebruiker_id: user.id,
+      status: status,
+    ));
+    fetchUserInschrijving();
   }
 
   @override
   Widget build(BuildContext context) {
     bool canModify = UserManager.loggedInUser!.id == widget.event.idGebruiker;
+    bool isUserLoggedIn = UserManager.loggedInUser != null;
 
     return Scaffold(
       appBar: AppBar(
@@ -104,6 +166,60 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 color: Colors.white,
               ),
             ),
+            const SizedBox(height: 10),
+            if (userInschrijving != null)
+              Card(
+                color: const Color.fromARGB(255, 116, 116, 116),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Je bent ingeschreven voor dit event.',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          DropdownButton<int>(
+                            value: userInschrijving!.status,
+                            dropdownColor:
+                                const Color.fromARGB(255, 116, 116, 116),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 0,
+                                child: Text('Not Sure'),
+                              ),
+                              DropdownMenuItem(
+                                value: 1,
+                                child: Text('Going'),
+                              ),
+                              DropdownMenuItem(
+                                value: 2,
+                                child: Text('Paid and Going'),
+                              ),
+                            ],
+                            onChanged: (int? newStatus) {
+                              if (newStatus != null) {
+                                updateInschrijvingStatus(newStatus);
+                              }
+                            },
+                          ),
+                          const SizedBox(width: 60),
+                          ElevatedButton(
+                            onPressed: deleteInschrijving,
+                            child: const Text('Uitschrijven'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -151,6 +267,20 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 onPressed: () {
                   editEvent(context);
                 },
+              ),
+            if (!canModify && isUserLoggedIn && userInschrijving == null)
+              ElevatedButton(
+                onPressed: () async {
+                  await inschrijvenEvent(
+                      widget.event, UserManager.loggedInUser!, 0);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Ingeschreven voor het event'),
+                    ),
+                  );
+                },
+                child: const Text('Inschrijven'),
               ),
           ],
         ),
