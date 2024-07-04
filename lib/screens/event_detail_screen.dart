@@ -58,6 +58,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         ),
       );
       Navigator.pop(context);
+      fetchUserInschrijving();
     }
   }
 
